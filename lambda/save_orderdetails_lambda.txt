@@ -1,0 +1,60 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { PutCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
+const client = new DynamoDBClient({ region: "us-east-1" });
+const dynamoDB = DynamoDBDocumentClient.from(client);
+
+export const handler = async (event) => {
+  try {
+    console.log("Incoming event:", JSON.stringify(event, null, 2));
+
+    const data = event.body ? JSON.parse(event.body) : event;
+    const { customerName, cart, total } = data;
+
+    // ✅ Validate input
+    if (!customerName || !Array.isArray(cart) || cart.length === 0 || total == null) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: "Missing required fields: customerName, cart, or total"
+        })
+      };
+    }
+
+    // ✅ Create order item
+    const orderId = `ORD-${Date.now()}`;
+    const orderItem = {
+      orderId,
+      customerName,
+      cart,
+      total,
+      orderDate: new Date().toISOString()
+    };
+
+    // ✅ Save to DynamoDB
+    const saveCommand = new PutCommand({
+      TableName: "bootcamp5-order-table",
+      Item: orderItem
+    });
+
+    await dynamoDB.send(saveCommand);
+    console.log("Order saved:", orderId);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Order placed successfully",
+        orderId
+      })
+    };
+  } catch (error) {
+    console.error("Error placing order:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: "Error placing order",
+        error: error.message
+      })
+    };
+  }
+};

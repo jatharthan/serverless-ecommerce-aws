@@ -1,0 +1,35 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { PutCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
+const client = new DynamoDBClient({ region: "us-east-1" });
+const dynamoDB = DynamoDBDocumentClient.from(client);
+
+export const handler = async (event) => {
+  try {
+    const { productId, name, price, quantity, imageUrl, description } = JSON.parse(event.body);
+
+    const params = new PutCommand({
+      TableName: "bootcamp5-product-table",
+      Item: {
+        productId,     // partition key
+        name,          // optional fields
+        price,
+        quantity,
+        imageUrl,
+        description
+      }
+    });
+
+    await dynamoDB.send(params);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Product saved successfully!" })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Failed to save product", details: error.message })
+    };
+  }
+};
