@@ -16,10 +16,3 @@ To ensure the system is production-grade and secure, **AWS WAF (Web Application 
 
 
 ---
-
----
-
-## License
-
-*(Add license information if needed)*
-
